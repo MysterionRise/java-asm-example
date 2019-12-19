@@ -57,6 +57,7 @@ test/nosetests.xml
 
 
 log
+*.class
 
 # Ruby stuff #
 ################

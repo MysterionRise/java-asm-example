@@ -22,22 +22,11 @@
             <version>${asm.version}</version>
         </dependency>
 
-        <!--<dependency>-->
-        <!--<groupId>org.ow2.asm</groupId>-->
-        <!--<artifactId>asm-util</artifactId>-->
-        <!--<version>${asm.version}</version>-->
-        <!--</dependency>-->
-
     </dependencies>
 
     <build>
         <pluginManagement>
             <plugins>
-                <plugin>
-                    <groupId>net.alchim31.maven</groupId>
-                    <artifactId>scala-maven-plugin</artifactId>
-                    <version>3.2.1</version>
-                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>

@@ -1,4 +1,6 @@
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -6,53 +8,25 @@ import java.io.IOException;
 
 public class SinusCalculation {
 
-    private static final String TRANSFORM_METHOD_NAME = "main";
-    private static final String MESSAGE = "Никита - молодец!";
+    private double calculation(double x, double y) {
+        return 2.0d * Math.sin((x + y) / 2.0d) * Math.cos((x - y) / 2.0d);
+    }
 
     public static void main(String[] args) throws IOException {
-        FileInputStream is = new FileInputStream("/Users/konstantinp/projects/java-asm-example/target/classes/SinusCalculation.class");
-//        FileInputStream is = new FileInputStream("SinusCalculation.class");
+        if (args.length != 2) {
+            throw new IllegalArgumentException("Expecting 2 parameters X and Y");
+        }
+        double result = new SinusCalculation().calculation(Double.parseDouble(args[0]), Double.parseDouble(args[1]));
+        System.out.println(result);
+
+        FileInputStream is = new FileInputStream("target/classes/SinusCalculation.class");
 
         ClassReader cr = new ClassReader(is);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
-        cr.accept(new ClassVisitor(Opcodes.ASM7, cw) {
+        cr.accept(new SinusVisitor(Opcodes.ASM7, cw), 0);
 
-            @Override
-            public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                if ("MESSAGE".equals(name))
-                    value = "Никита - хуй!";
-                return super.visitField(access, name, descriptor, signature, value);
-            }
-
-            @Override
-            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-
-                MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
-                if (name.equals(TRANSFORM_METHOD_NAME)) {
-                    return new MethodVisitor(Opcodes.ASM7, methodVisitor) {
-                        @Override
-                        public void visitLdcInsn(Object value) {
-                            if ("Никита - молодец!".equals(value)) value = "Никита - хуй!";
-                            super.visitLdcInsn(value);
-                        }
-                    };
-                }
-                return methodVisitor;
-            }
-            //            @Override
-//            public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-//                System.out.println(name);
-//                System.out.println(value);
-//                value = "хуй";
-//                return super.visitField(access, name, descriptor, signature, value);
-//            }
-
-        }, 0);
-
-        System.out.println(MESSAGE);
-
-        FileOutputStream fos = new FileOutputStream("SinusCalculation.class");
+        FileOutputStream fos = new FileOutputStream("target/classes/SinusCalculation.class");
         fos.write(cw.toByteArray());
         fos.close();
     }
