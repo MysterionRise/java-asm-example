@@ -1,5 +1,4 @@
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -26,9 +25,6 @@ public class SinusVisitor extends ClassVisitor {
                     // randomly changing method impl
                     if (RANDOM.nextBoolean()) {
                         System.out.println("Changing to sin(x) + sin(y)");
-                        Label l0 = new Label();
-                        mv.visitLabel(l0);
-                        mv.visitLineNumber(12, l0);
                         mv.visitVarInsn(Opcodes.DLOAD, 1);
                         mv.visitMethodInsn(Opcodes.INVOKESTATIC,
                                 "java/lang/Math", "sin",
@@ -42,8 +38,6 @@ public class SinusVisitor extends ClassVisitor {
                         mv.visitEnd();
                     } else {
                         System.out.println("Changing to 2*sin((x+y)/2)*cos((x+y)/2)");
-                        Label l0 = new Label();
-                        mv.visitLabel(l0);
                         mv.visitLdcInsn(2.0);
                         mv.visitVarInsn(Opcodes.DLOAD, 1);
                         mv.visitVarInsn(Opcodes.DLOAD, 3);
