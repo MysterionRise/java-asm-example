@@ -1,3 +1,10 @@
+Java Bytecode manipulation (at class file level)
+
+
+### What it's doing:
+
+Calculating sin(x) + sin(y) and replace the implementation with different variation by using ASM library and bytecode manipulation
+
 ### How to run:
 
 ```
