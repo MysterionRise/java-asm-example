@@ -19,13 +19,6 @@ log
 .idea/
 */.idea
 */target/
-*.iml
-*.ec
-*.ipr
-*.iws
-*.swp
-*~
-*.log
 *.log.*
 *.sqlite
 git.properties
@@ -54,9 +47,6 @@ logs
 test/.coverage
 test/coverage.xml
 test/nosetests.xml
-
-
-log
 *.class
 
 # Ruby stuff #
