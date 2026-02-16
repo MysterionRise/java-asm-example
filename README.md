@@ -1,6 +1,6 @@
 # java-asm-example
 
-![Java 21](https://img.shields.io/badge/Java-21-blue)
+![Java 25](https://img.shields.io/badge/Java-25-blue)
 ![ASM 9.9.1](https://img.shields.io/badge/ASM-9.9.1-green)
 ![Build](https://github.com/MysterionRise/java-asm-example/actions/workflows/build.yml/badge.svg)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-yellow.svg)](LICENSE)
@@ -9,7 +9,7 @@ A self-modifying bytecode demo using the [ASM](https://asm.ow2.io/) library. The
 
 ## Prerequisites
 
-- Java 21+
+- Java 25+
 - Maven 3.6+
 
 ## Build & Run

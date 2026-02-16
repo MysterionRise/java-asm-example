@@ -12,7 +12,7 @@ mvn clean package
 java -jar target/java-asm-example-1.0-SNAPSHOT.jar 1.0 2.0
 ```
 
-Requires Java 21+ and Maven. No tests exist in this project.
+Requires Java 25+ and Maven. No tests exist in this project.
 
 ## What This Project Does
 
