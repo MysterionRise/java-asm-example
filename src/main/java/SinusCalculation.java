@@ -27,7 +27,7 @@ public class SinusCalculation {
         ClassReader cr = new ClassReader(is);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
-        cr.accept(new SinusVisitor(Opcodes.ASM7, cw), 0);
+        cr.accept(new SinusVisitor(Opcodes.ASM9, cw), 0);
 
         FileOutputStream fos = new FileOutputStream(CLASS_LOCATION);
         fos.write(cw.toByteArray());

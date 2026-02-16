@@ -18,7 +18,7 @@ public class SinusVisitor extends ClassVisitor {
         if (name.equals(TRANSFORM_METHOD_NAME)) {
             MethodVisitor methodVisitor = cv.visitMethod(access, name, descriptor, signature, exceptions);
 
-            return new MethodVisitor(Opcodes.ASM7, methodVisitor) {
+            return new MethodVisitor(Opcodes.ASM9, methodVisitor) {
 
                 @Override
                 public void visitCode() {
