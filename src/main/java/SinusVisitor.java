@@ -2,68 +2,55 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Random;
+import java.util.Objects;
 
-public class SinusVisitor extends ClassVisitor {
+/// ASM `ClassVisitor` that swaps the body of `calculation(double, double)` for the bytecode of a [TrigForm]
+/// and passes every other member through untouched.
+final class SinusVisitor extends ClassVisitor {
 
-    private static final String TRANSFORM_METHOD_NAME = "calculation";
-    private static final Random RANDOM = new Random();
+    private final TrigForm form;
 
-    public SinusVisitor(int api, ClassVisitor classVisitor) {
-        super(api, classVisitor);
+    SinusVisitor(ClassVisitor next, TrigForm form) {
+        Objects.requireNonNull(form, "form"); // JEP 513 (final in Java 25): statements before super(...)
+        super(Opcodes.ASM9, next);
+        this.form = form;
     }
 
     @Override
-    public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        if (name.equals(TRANSFORM_METHOD_NAME)) {
-            MethodVisitor methodVisitor = cv.visitMethod(access, name, descriptor, signature, exceptions);
+    public MethodVisitor visitMethod(int access, String name, String descriptor, String signature,
+                                     String[] exceptions) {
+        MethodVisitor target = super.visitMethod(access, name, descriptor, signature, exceptions);
+        if (!BytecodeEngine.TARGET_METHOD.equals(name)) {
+            return target;
+        }
+        return new MethodVisitor(Opcodes.ASM9, target) {
 
-            return new MethodVisitor(Opcodes.ASM9, methodVisitor) {
-
-                @Override
-                public void visitCode() {
-                    // randomly changing method impl
-                    if (RANDOM.nextBoolean()) {
-                        System.out.println("Changing to sin(x) + sin(y)");
-                        mv.visitVarInsn(Opcodes.DLOAD, 1);
-                        mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                "java/lang/Math", "sin",
-                                "(D)D", false);
-                        mv.visitVarInsn(Opcodes.DLOAD, 3);
-                        mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                "java/lang/Math", "sin",
-                                "(D)D", false);
-                        mv.visitInsn(Opcodes.DADD);
-                        mv.visitInsn(Opcodes.DRETURN);
-                        mv.visitEnd();
-                    } else {
-                        System.out.println("Changing to 2*sin((x+y)/2)*cos((x+y)/2)");
-                        mv.visitLdcInsn(2.0);
-                        mv.visitVarInsn(Opcodes.DLOAD, 1);
-                        mv.visitVarInsn(Opcodes.DLOAD, 3);
-                        mv.visitInsn(Opcodes.DADD);
-                        mv.visitLdcInsn(2.0);
-                        mv.visitInsn(Opcodes.DDIV);
-                        mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                "java/lang/Math", "sin",
-                                "(D)D", false);
-                        mv.visitInsn(Opcodes.DMUL);
-                        mv.visitVarInsn(Opcodes.DLOAD, 1);
-                        mv.visitVarInsn(Opcodes.DLOAD, 3);
-                        mv.visitInsn(Opcodes.DSUB);
-                        mv.visitLdcInsn(2.0);
-                        mv.visitInsn(Opcodes.DDIV);
-                        mv.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                "java/lang/Math", "cos",
-                                "(D)D", false);
-                        mv.visitInsn(Opcodes.DMUL);
-                        mv.visitInsn(Opcodes.DRETURN);
-                        mv.visitEnd();
-                    }
+            @Override
+            public void visitCode() {
+                super.visitCode();
+                for (Insn insn : form.program()) {
+                    emit(insn);
                 }
-            };
-        } else
-            return super.visitMethod(access, name, descriptor, signature, exceptions);
-    }
+                mv.visitMaxs(0, 0); // COMPUTE_FRAMES recomputes max stack / max locals
+                mv.visitEnd();
+                mv = null;          // the original body that the reader streams next is silently discarded
+            }
 
+            private void emit(Insn insn) {
+                switch (insn) {
+                    case Insn.LoadArg(int slot) -> mv.visitVarInsn(Opcodes.DLOAD, slot);
+                    case Insn.Const(double value) -> mv.visitLdcInsn(value);
+                    case Insn.Call(String function) ->
+                            mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Math", function, "(D)D", false);
+                    case Insn.Arith op -> mv.visitInsn(switch (op) {
+                        case ADD -> Opcodes.DADD;
+                        case SUB -> Opcodes.DSUB;
+                        case MUL -> Opcodes.DMUL;
+                        case DIV -> Opcodes.DDIV;
+                    });
+                    case Insn.Return _ -> mv.visitInsn(Opcodes.DRETURN);
+                }
+            }
+        };
+    }
 }

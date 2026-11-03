@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      JAR: target/java-asm-example-1.0-SNAPSHOT.jar
     steps:
       - uses: actions/checkout@v4
 
@@ -19,8 +21,30 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Build
-        run: mvn clean package
+      - name: Build and test
+        run: mvn -B clean verify
 
-      - name: Smoke test
-        run: java -jar target/java-asm-example-1.0-SNAPSHOT.jar 1.0 2.0
+      - name: "Demo 1: rewrite the jar on disk with ASM (PRODUCT -> SUM)"
+        run: |
+          java --enable-preview -jar "$JAR" 1.0 2.0 --form sum --dump | tee run1.log
+          grep -q "Loaded implementation: PRODUCT" run1.log
+          grep -q "Rewriting with the asm engine to: SUM" run1.log
+
+      - name: "Demo 2: the next run executes the rewritten bytecode, then flips back with the Class-File API"
+        run: |
+          java --enable-preview -jar "$JAR" 1.0 2.0 --engine classfile --dump | tee run2.log
+          grep -q "Loaded implementation: SUM" run2.log
+          grep -q "Rewriting with the classfile engine to: PRODUCT" run2.log
+
+      - name: "Demo 3: live hot-swap inside the JVM via the Launcher-Agent-Class agent"
+        run: |
+          java --enable-preview -jar "$JAR" 1.0 2.0 --mode live --engine classfile --dump | tee run3.log
+          grep -Eq "^round [0-9]+  SUM" run3.log
+          grep -Eq "^round [0-9]+  PRODUCT" run3.log
+
+      - name: "Demo 4: class directory on the class path, agent attached with -javaagent"
+        run: |
+          java --enable-preview -javaagent:"$JAR" -cp "target/classes:target/dependencies/*" SinusCalculation 1.0 2.0 --mode live --engine asm --rounds 2 | tee run4.log
+          grep -q "retransformed in memory" run4.log
+          java --enable-preview -cp "target/classes:target/dependencies/*" SinusCalculation 1.0 2.0 --form product | tee run5.log
+          grep -Eq "^Wrote .*target/classes/SinusCalculation.class" run5.log
